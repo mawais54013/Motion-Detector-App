@@ -1,9 +1,12 @@
 from datetime import datetime
 import cv2, time
 
+import pandas
+
 first_frame=None
-status_list=[]
+status_list=[None, None]
 times=[]
+df=pandas.DataFrame(columns=["Start","End"])
 
 video=cv2.VideoCapture(1)
 # Might need to change above to 0 if you don't have obs installed
@@ -23,7 +26,7 @@ while True:
     thresh_frame=cv2.threshold(delta_frame, 30, 255, cv2.THRESH_BINARY)[1]
     thresh_frame=cv2.dilate(thresh_frame, None, iterations=2)
 
-    (_,cnts,_)=cv2.findContours(thresh_frame.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+    (cnts,_)=cv2.findContours(thresh_frame.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
     for contour in cnts:
         if cv2.contourArea(contour) < 10000:
@@ -49,9 +52,17 @@ while True:
     key=cv2.waitKey(1)
 
     if key==ord('q'):
+        if status==1:
+            times.append(datetime.now())
         break
-    
     print(status_list)
+print(times)
 
+# ex 0-6 first start with 0 and then iterate to 3 because of the 2
+for i in range(0,len(times),2):
+    df=df.append({"Start":times[i], "End":times[i+1]}, ignore_index=True)
+
+df.to_csv("Times.csv")
+print("testing")
 video.release()
 cv2.destroyAllWindows
